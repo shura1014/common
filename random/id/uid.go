@@ -20,8 +20,8 @@ var (
 	counter atom.Uint32
 	// 7个字节
 	macStr = []byte{'0', '0', '0', '0', '0', '0', '0'}
-	// 4个字节
-	pidStr = []byte{'0', '0', '0', '0'}
+	// 3个字节
+	pidStr = []byte{'0', '0', '0'}
 )
 
 const (
