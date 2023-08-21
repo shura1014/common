@@ -5,13 +5,10 @@ import (
 	"strings"
 )
 
-/*
-对文件名的操作
-*/
-
-// ExtName 扩展名
+// ExtName 对文件名的操作
+// 扩展名
 func ExtName(path string) string {
-	return strings.TrimLeft(Ext(path), ".")
+	return strings.TrimLeft(Ext(path), Point)
 }
 
 // Ext 扩展

@@ -3,8 +3,11 @@ package fileutil
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
+
+const Point = "."
 
 var (
 	Separator = string(filepath.Separator)
@@ -12,10 +15,20 @@ var (
 
 // Dir 目录
 func Dir(path string) string {
-	if path == "." {
-		return filepath.Dir(RealPath(path))
+	if strings.HasPrefix(path, Point) {
+		// 相对路径转成绝对路径
+		return filepath.Dir(AbsPath(path))
 	}
 	return filepath.Dir(path)
+}
+
+// AbsPath 绝对路径，但是不检查是否存在
+func AbsPath(path string) string {
+	p, err := filepath.Abs(path)
+	if err != nil {
+		return ""
+	}
+	return p
 }
 
 // RealPath 绝对路径
@@ -96,4 +109,34 @@ func DirFunc(dir string, f func()) {
 	}()
 	_ = os.Chdir(dir)
 	f()
+}
+
+// CallDir 返回调用路径
+func CallDir(dir string, skips ...int) string {
+	if dir == "" {
+		dir = Point
+	}
+	if strings.HasPrefix(dir, "/") {
+		// 绝对路径
+		return dir
+	}
+
+	// 	相对路径
+	var (
+		realPath string
+		skip     = 2
+	)
+
+	if len(skips) > 0 {
+		skip += skips[0]
+	}
+
+	_, file, _, _ := runtime.Caller(skip)
+	if file == "" {
+		return ""
+	}
+	DirFunc(Dir(file), func() {
+		realPath = RealPath(dir)
+	})
+	return realPath
 }
