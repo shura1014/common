@@ -1,6 +1,7 @@
 package concurrent
 
 import (
+	"github.com/shura1014/common/container/list/generics"
 	"github.com/shura1014/common/utils/stringutil"
 	"sync"
 )
@@ -60,6 +61,42 @@ func (m *AnyMap[V]) Iterator(f func(key any, value V) bool) {
 		}
 	}
 	m.mu.RUnlock()
+}
+
+func (m *AnyMap[V]) KeysArray() []any {
+	var keys []any
+	m.Iterator(func(key any, value V) bool {
+		keys = append(keys, key)
+		return true
+	})
+	return keys
+}
+
+func (m *AnyMap[V]) KeysList() *generics.List[any] {
+	l := generics.NewList[any]()
+	m.Iterator(func(key any, value V) bool {
+		l.PushBack(key)
+		return true
+	})
+	return l
+}
+
+func (m *AnyMap[V]) ValuesArray() []V {
+	var values []V
+	m.Iterator(func(key any, value V) bool {
+		values = append(values, value)
+		return true
+	})
+	return values
+}
+
+func (m *AnyMap[V]) ValuesList() *generics.List[V] {
+	l := generics.NewList[V]()
+	m.Iterator(func(key any, value V) bool {
+		l.PushBack(value)
+		return true
+	})
+	return l
 }
 
 func (m *AnyMap[V]) GetAll() map[any]V {
