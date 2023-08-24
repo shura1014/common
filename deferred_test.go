@@ -7,19 +7,30 @@ import (
 )
 
 func TestDeferredResult_SetDeferredResultHandler(t *testing.T) {
-	result := NewDeferredResult(5*time.Second, "超时了")
-	result.SetDeferredResultHandler(func(result any) {
-		t.Log(result)
+	var result *DeferredResult
+
+	NewDeferredResult(5*time.Second, "超时了", func(deferred *DeferredResult) {
+		result = deferred
+		result.SetDeferredResultHandler(func(result any) {
+			t.Log(result)
+		})
+		//time.Sleep(3 * time.Second)
+		_ = result.SetResult("success")
 	})
-	time.Sleep(3 * time.Second)
-	result.SetResult("success")
+
 }
 
 type testHandler struct {
 }
 
 func (test *testHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	NewDeferredResultWriter(5*time.Second, "超时了", w)
+	var deferredResultWriter *DeferredResultWriter
+	NewDeferredResultWriter(5*time.Second, "超时了", w, func(deferred *DeferredResultWriter) {
+		deferredResultWriter = deferred
+		time.Sleep(3 * time.Second)
+		_ = deferredResultWriter.SetResult("success")
+	})
+
 }
 
 func TestNewHttpDeferredResult(t *testing.T) {

@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/json"
 	"github.com/shura1014/common/clog"
+	"github.com/shura1014/common/goerr"
 	"io"
 	"time"
 )
@@ -11,6 +12,7 @@ type DeferredResult struct {
 	timeout       time.Duration
 	timeoutResult any
 	resultHandler func(result any)
+	done          bool
 	result        chan any
 }
 
@@ -23,21 +25,28 @@ func DeferredResultInstance(timeout time.Duration, timeoutResult any) *DeferredR
 	return deferred
 }
 
-func NewDeferredResult(timeout time.Duration, timeoutResult any) *DeferredResult {
+func NewDeferredResult(timeout time.Duration, timeoutResult any, callback ...func(deferred *DeferredResult)) {
 	instance := DeferredResultInstance(timeout, timeoutResult)
-	go instance.listener()
-	return instance
+	if len(callback) > 0 {
+		go callback[0](instance)
+	}
+	instance.listener()
 }
 
 func (deferred *DeferredResult) SetDeferredResultHandler(resultHandler func(result any)) {
 	deferred.resultHandler = resultHandler
 }
 
-func (deferred *DeferredResult) SetResult(result any) {
+func (deferred *DeferredResult) SetResult(result any) error {
+	if deferred.done {
+		return goerr.Text("the deferred result is done")
+	}
 	deferred.result <- result
+	return nil
 }
 
 func (deferred *DeferredResult) listener() {
+	defer func() { deferred.done = true }()
 	timer := time.NewTimer(deferred.timeout)
 	select {
 	case result := <-deferred.result:
@@ -52,7 +61,7 @@ type DeferredResultWriter struct {
 	write io.Writer
 }
 
-func NewDeferredResultWriter(timeout time.Duration, timeoutResult any, write io.Writer) *DeferredResultWriter {
+func NewDeferredResultWriter(timeout time.Duration, timeoutResult any, write io.Writer, callback ...func(deferred *DeferredResultWriter)) {
 	deferred := &DeferredResultWriter{
 		DeferredResult: DeferredResultInstance(timeout, timeoutResult),
 		write:          write,
@@ -67,6 +76,8 @@ func NewDeferredResultWriter(timeout time.Duration, timeoutResult any, write io.
 			clog.Error(err)
 		}
 	})
+	if len(callback) > 0 {
+		go callback[0](deferred)
+	}
 	deferred.listener()
-	return deferred
 }
