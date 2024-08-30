@@ -81,3 +81,14 @@ func Convert(timeString string) time.Duration {
 	timeInt, _ := strconv.Atoi(timeString)
 	return time.Duration(timeInt)
 }
+
+// TimeStamp 毫秒时间戳
+func TimeStamp() int64 {
+	return MilliSeconds()
+}
+
+// TimeStampToDateString 时间戳转字符串日期
+// timestamp 毫秒
+func TimeStampToDateString(timestamp int64) string {
+	return time.Unix(timestamp, 1_000).Format(DefaultFormat)
+}
