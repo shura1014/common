@@ -3,6 +3,7 @@ package env
 import (
 	"os"
 	"regexp"
+	"strings"
 )
 
 /*
@@ -32,6 +33,21 @@ var (
 
 func init() {
 	InitArgs(os.Args)
+	initOSEnv()
+}
+
+func initOSEnv() {
+	osEnvs := os.Environ()
+	// 遍历环境变量并填充map
+	for _, env := range osEnvs {
+		// 拆分键值对
+		parts := strings.SplitN(env, "=", 2)
+		if len(parts) == 2 {
+			key, value := parts[0], parts[1]
+			// 将键值对存入map
+			envs[key] = value
+		}
+	}
 }
 
 func InitArgs(args []string) {
